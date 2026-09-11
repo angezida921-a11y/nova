@@ -1,0 +1,2 @@
+-- Nova - Schéma de la base de données
+-- (À remplir au Jour 8)
