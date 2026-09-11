@@ -3,10 +3,234 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nova</title>
+  <title>Nova - Marketplace vidéo-first</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>Nova</h1>
-  <p>Marketplace vidéo-first</p>
+
+  <!-- ============================================
+       VUE 1 : CONNEXION
+       ============================================ -->
+  <section id="view-login" class="view">
+    <div class="auth-container">
+      <h1 class="logo">NOVA</h1>
+      <p class="tagline">Marketplace vidéo-first</p>
+      
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="Email" required>
+        <input type="password" id="login-password" placeholder="Mot de passe" required>
+        <button type="submit" class="btn-primary">Se connecter</button>
+      </form>
+      
+      <p class="auth-switch">
+        Pas encore de compte ? 
+        <a href="#" onclick="showView('view-register')">S'inscrire</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================
+       VUE 2 : INSCRIPTION
+       ============================================ -->
+  <section id="view-register" class="view hidden">
+    <div class="auth-container">
+      <h1 class="logo">NOVA</h1>
+      <p class="tagline">Créer un compte</p>
+      
+      <form id="register-form">
+        <input type="text" id="register-name" placeholder="Nom complet" required>
+        <input type="email" id="register-email" placeholder="Email" required>
+        <input type="password" id="register-password" placeholder="Mot de passe" required>
+        <input type="password" id="register-password-confirm" placeholder="Confirmer mot de passe" required>
+        <input type="tel" id="register-phone" placeholder="Téléphone" required>
+        <input type="date" id="register-birthdate" placeholder="Date de naissance" required>
+        
+        <button type="button" class="btn-location" onclick="getLocation()">
+          📍 Utiliser ma position actuelle
+        </button>
+        <input type="text" id="register-address" placeholder="Adresse précise" required>
+        <input type="text" id="register-city" placeholder="Ville" required>
+        <input type="text" id="register-country" placeholder="Pays" value="Burkina Faso" required>
+        
+        <label class="checkbox-label">
+          <input type="checkbox" required> J'accepte les conditions générales
+        </label>
+        
+        <button type="submit" class="btn-primary">Créer mon compte</button>
+      </form>
+      
+      <p class="auth-switch">
+        Déjà un compte ? 
+        <a href="#" onclick="showView('view-login')">Se connecter</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================
+       VUE 3 : FEED VIDÉO
+       ============================================ -->
+  <section id="view-feed" class="view hidden">
+    
+    <!-- Barre du haut -->
+    <header class="feed-header">
+      <h1 class="logo-small">NOVA</h1>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="showView('view-notifications')">🔔</button>
+        <button class="icon-btn" onclick="showView('view-profile')">👤</button>
+      </div>
+    </header>
+
+    <!-- Zone des vidéos -->
+    <div class="feed-container" id="feed-container">
+      <!-- Les vidéos seront injectées ici par JavaScript -->
+      <div class="video-placeholder">
+        <p>Chargement des vidéos...</p>
+      </div>
+    </div>
+
+    <!-- Barre de navigation en bas -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" onclick="showView('view-feed')">🏠</button>
+      <button class="nav-btn" onclick="showView('view-search')">🔍</button>
+      <button class="nav-btn" onclick="showView('view-publish')">➕</button>
+      <button class="nav-btn" onclick="showView('view-wallet')">💰</button>
+      <button class="nav-btn" onclick="showView('view-profile')">👤</button>
+    </nav>
+  </section>
+
+  <!-- ============================================
+       VUE 4 : PROFIL
+       ============================================ -->
+  <section id="view-profile" class="view hidden">
+    <header class="page-header">
+      <button class="back-btn" onclick="showView('view-feed')">←</button>
+      <h2>Mon Profil</h2>
+    </header>
+
+    <div class="profile-container">
+      <div class="profile-header">
+        <img src="" alt="Photo de profil" class="profile-avatar" id="profile-avatar">
+        <h3 id="profile-name">Nom utilisateur</h3>
+        <p id="profile-email">email@example.com</p>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn-secondary" onclick="showView('view-wallet')">💰 Mon NovaWallet</button>
+        <button class="btn-secondary" id="btn-become-seller">🏪 Devenir Vendeur</button>
+        <button class="btn-secondary" id="btn-become-deliverer">🏍️ Devenir Livreur</button>
+        <button class="btn-secondary">⚙️ Paramètres</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       VUE 5 : PORTEFEUILLE (NOVAWALLET)
+       ============================================ -->
+  <section id="view-wallet" class="view hidden">
+    <header class="page-header">
+      <button class="back-btn" onclick="showView('view-feed')">←</button>
+      <h2>NovaWallet</h2>
+    </header>
+
+    <div class="wallet-container">
+      <div class="wallet-balance">
+        <p class="balance-label">Solde</p>
+        <p class="balance-amount"><span id="wallet-balance">0</span> Nova</p>
+      </div>
+
+      <div class="wallet-actions">
+        <button class="btn-primary" onclick="showView('view-deposit')">Déposer</button>
+        <button class="btn-secondary" onclick="showView('view-withdraw')">Retirer</button>
+      </div>
+
+      <div class="wallet-history">
+        <h3>Historique</h3>
+        <div id="wallet-transactions">
+          <p class="empty-state">Aucune transaction pour l'instant.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       VUE 6 : PUBLICATION (Vendeurs)
+       ============================================ -->
+  <section id="view-publish" class="view hidden">
+    <header class="page-header">
+      <button class="back-btn" onclick="showView('view-feed')">←</button>
+      <h2>Publier</h2>
+    </header>
+
+    <div class="publish-container">
+      <form id="publish-form">
+        <div class="upload-zone">
+          <input type="file" id="publish-media" accept="video/*,image/*" hidden>
+          <label for="publish-media" class="upload-label">
+            📤 Choisir une vidéo ou photo
+          </label>
+        </div>
+
+        <input type="text" id="publish-title" placeholder="Titre du produit" required>
+        <textarea id="publish-description" placeholder="Description"></textarea>
+        <input type="number" id="publish-price" placeholder="Prix en Nova" required>
+        <input type="number" id="publish-stock" placeholder="Stock disponible" value="1">
+
+        <div class="publish-fee">
+          <p>Frais de publication : <strong id="publish-fee-amount">0</strong> Nova</p>
+        </div>
+
+        <button type="submit" class="btn-primary">Publier</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============================================
+       VUE 7 : RECHERCHE
+       ============================================ -->
+  <section id="view-search" class="view hidden">
+    <header class="page-header">
+      <h2>Recherche</h2>
+    </header>
+
+    <div class="search-container">
+      <input type="search" id="search-input" placeholder="Rechercher un produit...">
+      
+      <div class="search-filters">
+        <button class="filter-btn">Prix</button>
+        <button class="filter-btn">Catégorie</button>
+        <button class="filter-btn">Localisation</button>
+      </div>
+
+      <div id="search-results">
+        <p class="empty-state">Tape pour rechercher.</p>
+      </div>
+    </div>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn" onclick="showView('view-feed')">🏠</button>
+      <button class="nav-btn active" onclick="showView('view-search')">🔍</button>
+      <button class="nav-btn" onclick="showView('view-publish')">➕</button>
+      <button class="nav-btn" onclick="showView('view-wallet')">💰</button>
+      <button class="nav-btn" onclick="showView('view-profile')">👤</button>
+    </nav>
+  </section>
+
+  <!-- ============================================
+       VUE 8 : NOTIFICATIONS
+       ============================================ -->
+  <section id="view-notifications" class="view hidden">
+    <header class="page-header">
+      <button class="back-btn" onclick="showView('view-feed')">←</button>
+      <h2>Notifications</h2>
+    </header>
+
+    <div class="notifications-container">
+      <div id="notifications-list">
+        <p class="empty-state">Aucune notification.</p>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/app.js"></script>
 </body>
 </html>
