@@ -12,6 +12,7 @@
 
 html, body {
   height: 100%;
+  width: 100%;
   overflow: hidden;
   background-color: #0a0a0a;
   color: #ffffff;
@@ -19,45 +20,36 @@ html, body {
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 :root {
-  /* FONDS */
   --color-bg: #0a0a0a;
   --color-bg-elevated: #141414;
   --color-bg-hover: #1f1f1f;
   --color-border: #2a2a2a;
-
-  /* TEXTES */
   --color-text: #ffffff;
   --color-text-secondary: #a0a0a0;
   --color-text-muted: #666;
-
-  /* OR (LUXE) */
   --color-gold: #D4AF37;
   --color-gold-light: #F4D03F;
   --color-gold-dark: #B8860B;
   --color-gold-glow: rgba(212, 175, 55, 0.4);
-
-  /* ACCENTS */
   --color-red: #FF1744;
   --color-blue: #2979FF;
-
-  /* DÉGRADÉS */
   --gradient-gold: linear-gradient(135deg, #D4AF37 0%, #F4D03F 50%, #D4AF37 100%);
-  --gradient-gold-soft: linear-gradient(135deg, #B8860B 0%, #D4AF37 100%);
   --gradient-dark: radial-gradient(circle at top, #1a1a1a 0%, #0a0a0a 70%);
-
-  /* OMBRES */
   --shadow-gold: 0 4px 20px rgba(212, 175, 55, 0.3);
   --shadow-gold-strong: 0 8px 30px rgba(212, 175, 55, 0.5);
-
-  /* TRANSITIONS */
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-/* ---------- GESTION DES VUES ---------- */
+/* ---------- GESTION DES VUES (avec transitions) ---------- */
 .view {
   display: none;
   width: 100%;
@@ -67,16 +59,29 @@ html, body {
   left: 0;
   flex-direction: column;
   background-color: var(--color-bg);
-  animation: fadeIn 0.4s ease;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
 }
 
 .view.active {
   display: flex;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  animation: viewEnter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.view.leaving {
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+}
+
+@keyframes viewEnter {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ---------- SVG GLOBAL ---------- */
@@ -117,6 +122,11 @@ svg {
   letter-spacing: 4px;
   margin-bottom: 8px;
   text-shadow: 0 0 60px rgba(212, 175, 55, 0.3);
+  transition: text-shadow 0.3s ease;
+}
+
+.logo:hover {
+  text-shadow: 0 0 80px rgba(212, 175, 55, 0.6);
 }
 
 .tagline {
@@ -154,6 +164,7 @@ input:focus, textarea:focus {
   border-color: var(--color-gold);
   background-color: #1a1a1a;
   box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+  transform: scale(1.01);
 }
 
 input::placeholder, textarea::placeholder {
@@ -180,6 +191,26 @@ textarea {
   box-shadow: var(--shadow-gold);
   letter-spacing: 1px;
   text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-primary:active::after {
+  width: 300px;
+  height: 300px;
 }
 
 .btn-primary:hover {
@@ -219,6 +250,10 @@ textarea {
   background-color: var(--color-bg-hover);
   border-color: var(--color-gold-dark);
   transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
 }
 
 .btn-location {
@@ -311,10 +346,13 @@ textarea {
   accent-color: var(--color-gold);
 }
 
-/* ---------- FEED VIDÉO ---------- */
+/* ============================================
+   FEED VIDÉO (Style TikTok)
+   ============================================ */
 #view-feed {
   position: relative;
   background-color: #000;
+  overflow: hidden;
 }
 
 .feed-header {
@@ -344,6 +382,11 @@ textarea {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: 3px;
+  transition: text-shadow 0.3s ease;
+}
+
+.logo-small:hover {
+  text-shadow: 0 0 80px rgba(212, 175, 55, 0.6);
 }
 
 .header-actions {
@@ -378,24 +421,83 @@ textarea {
   transform: scale(1.1);
 }
 
+/* Conteneur du feed (scrollable) */
 .feed-container {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
-}
-
-.video-placeholder {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
   height: 100%;
-  color: var(--color-text-muted);
-  gap: 20px;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  background-color: #000;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
-/* ---------- ACTIONS DU FEED (colonne droite) ---------- */
+.feed-container::-webkit-scrollbar {
+  display: none;
+}
+
+.feed-item {
+  width: 100%;
+  height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.video-bg {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding: 120px 20px 160px 20px;
+  position: relative;
+}
+
+.video-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, transparent 0%, transparent 50%, rgba(0,0,0,0.85) 100%);
+  pointer-events: none;
+}
+
+.video-info {
+  position: relative;
+  z-index: 2;
+  max-width: 70%;
+}
+
+.video-user {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.video-title {
+  font-size: 15px;
+  color: #fff;
+  margin-bottom: 6px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.video-price {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--color-gold);
+  text-shadow: 0 0 20px var(--color-gold-glow);
+}
+
+/* ---------- ACTIONS DU FEED (UNE SEULE COLONNE) ---------- */
 .feed-actions {
   position: absolute;
   right: 12px;
@@ -404,7 +506,8 @@ textarea {
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  z-index: 10;
+  z-index: 20;
+  pointer-events: auto;
 }
 
 .action-item {
@@ -487,7 +590,7 @@ textarea {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-/* ---------- AVATAR (CORRIGÉ) ---------- */
+/* ---------- AVATAR ---------- */
 .avatar-wrapper {
   position: relative;
   margin-bottom: 8px;
@@ -509,6 +612,12 @@ textarea {
   color: #0a0a0a;
   overflow: hidden;
   text-transform: uppercase;
+  animation: avatarPulse 3s ease-in-out infinite;
+}
+
+@keyframes avatarPulse {
+  0%, 100% { box-shadow: 0 0 15px var(--color-gold-glow); }
+  50% { box-shadow: 0 0 30px var(--color-gold-glow), 0 0 50px rgba(212, 175, 55, 0.2); }
 }
 
 .avatar img {
@@ -699,9 +808,25 @@ textarea {
   animation: shimmer 4s infinite;
 }
 
+.wallet-balance::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shine 3s infinite;
+}
+
 @keyframes shimmer {
   0%, 100% { transform: translate(0, 0); }
   50% { transform: translate(-10%, -10%); }
+}
+
+@keyframes shine {
+  0% { left: -100%; }
+  50%, 100% { left: 100%; }
 }
 
 .balance-label {
@@ -859,4 +984,175 @@ textarea {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-gold-dark);
+}
+
+/* ============================================
+   ANIMATIONS D'ENTRÉE (cascade)
+   ============================================ */
+.view.active .logo {
+  animation: slideInDown 0.6s ease 0.1s both;
+}
+
+.view.active .tagline {
+  animation: slideInDown 0.6s ease 0.2s both;
+}
+
+.view.active form {
+  animation: slideInUp 0.6s ease 0.3s both;
+}
+
+.view.active .auth-switch {
+  animation: slideInUp 0.6s ease 0.4s both;
+}
+
+.view.active .feed-header {
+  animation: slideInDown 0.6s ease 0.1s both;
+}
+
+.view.active .feed-actions {
+  animation: slideInRight 0.6s ease 0.3s both;
+}
+
+.view.active .bottom-nav {
+  animation: slideInUp 0.6s ease 0.2s both;
+}
+
+.view.active .page-header {
+  animation: slideInDown 0.6s ease 0.1s both;
+}
+
+.view.active .page-content {
+  animation: slideInUp 0.6s ease 0.2s both;
+}
+
+.view.active .profile-avatar {
+  animation: zoomIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.2s both;
+}
+
+.view.active .profile-header h3,
+.view.active .profile-header p {
+  animation: slideInUp 0.6s ease 0.4s both;
+}
+
+.view.active .profile-actions button {
+  animation: slideInUp 0.6s ease both;
+}
+
+.view.active .profile-actions button:nth-child(1) { animation-delay: 0.5s; }
+.view.active .profile-actions button:nth-child(2) { animation-delay: 0.6s; }
+.view.active .profile-actions button:nth-child(3) { animation-delay: 0.7s; }
+.view.active .profile-actions button:nth-child(4) { animation-delay: 0.8s; }
+
+.view.active .wallet-balance {
+  animation: zoomIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.2s both;
+}
+
+.view.active .wallet-actions button {
+  animation: slideInUp 0.6s ease both;
+}
+
+.view.active .wallet-actions button:nth-child(1) { animation-delay: 0.5s; }
+.view.active .wallet-actions button:nth-child(2) { animation-delay: 0.6s; }
+
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+/* Tablettes (768px et plus) */
+@media (min-width: 768px) {
+  .auth-container form {
+    max-width: 450px;
+  }
+
+  .page-content {
+    max-width: 700px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+/* Desktop (1024px et plus) : feed centré avec largeur fixe */
+@media (min-width: 1024px) {
+  #view-feed {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000;
+  }
+
+  .feed-container {
+    width: 500px;
+    max-width: 500px;
+    height: 100vh;
+    position: relative;
+    border-left: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+  }
+
+  .feed-actions {
+    position: absolute;
+    right: calc(50% - 250px + 12px);
+    bottom: 100px;
+  }
+
+  .feed-header {
+    width: 500px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+  }
+
+  .bottom-nav {
+    width: 500px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+  }
+}
+
+/* Petits mobiles (moins de 375px) */
+@media (max-width: 375px) {
+  .logo {
+    font-size: 48px;
+  }
+
+  .logo-small {
+    font-size: 22px;
+  }
+
+  .action-btn svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .nav-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+  }
 }

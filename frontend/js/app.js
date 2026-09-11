@@ -2,17 +2,38 @@
 // NOVA - Logique principale
 // ============================================
 
-// ---------- NAVIGATION ENTRE LES VUES ----------
+// ---------- NAVIGATION ENTRE LES VUES (avec transitions) ----------
 function showView(viewId) {
   const allViews = document.querySelectorAll('.view');
-  allViews.forEach(view => view.classList.remove('active'));
-
   const targetView = document.getElementById(viewId);
-  if (targetView) {
-    targetView.classList.add('active');
+
+  if (!targetView) return;
+
+  // Jouer le son de navigation
+  if (window.NovaSounds) {
+    window.NovaSounds.nav();
   }
 
-  window.scrollTo(0, 0);
+  // Cacher toutes les vues actives avec une transition
+  allViews.forEach(view => {
+    if (view.classList.contains('active')) {
+      view.classList.add('leaving');
+      setTimeout(() => {
+        view.classList.remove('active', 'leaving');
+      }, 300);
+    }
+  });
+
+  // Afficher la nouvelle vue après un léger délai
+  setTimeout(() => {
+    targetView.classList.add('active');
+    window.scrollTo(0, 0);
+
+    const feedContainer = document.getElementById('feed-container');
+    if (feedContainer && viewId === 'view-feed') {
+      feedContainer.scrollTop = 0;
+    }
+  }, 300);
 }
 
 // ---------- GÉOLOCALISATION ----------
@@ -35,11 +56,6 @@ function getLocation() {
 }
 
 // ---------- GESTION DE L'AVATAR (Initiales) ----------
-/**
- * Affiche les initiales d'un utilisateur dans l'avatar
- * @param {string} fullName - Nom complet de l'utilisateur
- * @param {string} elementId - ID de l'élément avatar
- */
 function setAvatarInitials(fullName, elementId) {
   const element = document.getElementById(elementId);
   if (!element) return;
@@ -56,12 +72,18 @@ function setAvatarInitials(fullName, elementId) {
   element.innerHTML = `<span>${initials.toUpperCase()}</span>`;
 }
 
-// ---------- INTERACTIONS DES ICÔNES ----------
+// ---------- INTERACTIONS DES ICÔNES (avec sons) ----------
 
 // Like
 document.querySelectorAll('.like-btn').forEach(btn => {
   btn.addEventListener('click', function () {
     this.classList.toggle('active');
+    
+    if (this.classList.contains('active') && window.NovaSounds) {
+      window.NovaSounds.like();
+    } else if (window.NovaSounds) {
+      window.NovaSounds.button();
+    }
   });
 });
 
@@ -69,6 +91,12 @@ document.querySelectorAll('.like-btn').forEach(btn => {
 document.querySelectorAll('.bookmark-btn').forEach(btn => {
   btn.addEventListener('click', function () {
     this.classList.toggle('active');
+    
+    if (this.classList.contains('active') && window.NovaSounds) {
+      window.NovaSounds.bookmark();
+    } else if (window.NovaSounds) {
+      window.NovaSounds.button();
+    }
   });
 });
 
@@ -79,12 +107,14 @@ if (followBtn) {
     this.classList.toggle('following');
 
     if (this.classList.contains('following')) {
+      if (window.NovaSounds) window.NovaSounds.follow();
       this.innerHTML = `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       `;
     } else {
+      if (window.NovaSounds) window.NovaSounds.button();
       this.innerHTML = `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19"/>
@@ -95,6 +125,33 @@ if (followBtn) {
   });
 }
 
+// Boutons ACHETER et RÉSERVER
+document.querySelectorAll('.buy-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    if (window.NovaSounds) window.NovaSounds.buy();
+  });
+});
+
+document.querySelectorAll('.reserve-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    if (window.NovaSounds) window.NovaSounds.reserve();
+  });
+});
+
+// Boutons principaux
+document.querySelectorAll('.btn-primary').forEach(btn => {
+  btn.addEventListener('click', function () {
+    if (window.NovaSounds) window.NovaSounds.button();
+  });
+});
+
+// Boutons secondaires
+document.querySelectorAll('.btn-secondary').forEach(btn => {
+  btn.addEventListener('click', function () {
+    if (window.NovaSounds) window.NovaSounds.button();
+  });
+});
+
 // ---------- SIMULATION D'AUTHENTIFICATION ----------
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
@@ -102,11 +159,6 @@ if (loginForm) {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
     console.log("Connexion simulée :", email);
-
-    // Exemple : mettre à jour l'avatar avec un nom fictif
-    // setAvatarInitials("Awa Diallo", "feed-avatar");
-    // setAvatarInitials("Awa Diallo", "profile-avatar");
-
     showView('view-feed');
   });
 }
@@ -119,11 +171,9 @@ if (registerForm) {
     const email = document.getElementById('register-email').value;
     console.log("Inscription simulée :", name, email);
 
-    // Mettre à jour l'avatar avec les initiales du nouvel utilisateur
     setAvatarInitials(name, 'feed-avatar');
     setAvatarInitials(name, 'profile-avatar');
 
-    // Mettre à jour le nom et l'email dans le profil
     const profileName = document.getElementById('profile-name');
     const profileEmail = document.getElementById('profile-email');
     if (profileName) profileName.textContent = name;
