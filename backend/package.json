@@ -1,0 +1,27 @@
+{
+  "name": "nova-backend",
+  "version": "1.0.0",
+  "description": "Backend de Nova - Marketplace vidéo-first",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "nova",
+    "marketplace",
+    "backend"
+  ],
+  "author": "Ange Zida",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
