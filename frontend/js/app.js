@@ -1,5 +1,5 @@
 // ============================================
-// NOVA - Logique principale (Jour 6 + Splash)
+// NOVA - Logique principale (Jour 7 - Auth Supabase)
 // ============================================
 
 // ---------- VARIABLES GLOBALES ----------
@@ -80,7 +80,6 @@ const videosData = [
 // ÉCRANS DE CHARGEMENT
 // ============================================
 
-// ---------- SPLASH SCREEN ----------
 function showSplashScreen() {
   const splash = document.getElementById('splash-screen');
   const status = document.getElementById('splash-status');
@@ -120,7 +119,6 @@ function showSplashScreen() {
   runStep();
 }
 
-// ---------- ÉCRAN DE TRANSITION ----------
 function showTransition(text = 'Chargement...', duration = 1500) {
   return new Promise((resolve) => {
     const transition = document.getElementById('transition-screen');
@@ -149,14 +147,12 @@ async function showView(viewId) {
   if (!targetView) return;
   if (targetView.classList.contains('active')) return;
 
-  // Vues qui déclenchent un écran de transition
   const transitionViews = {
     'view-feed': 'Préparation du feed...',
     'view-profile': 'Chargement du profil...',
     'view-wallet': 'Connexion au NovaWallet...'
   };
 
-  // Si c'est une vue importante, montrer l'écran de transition
   if (transitionViews[viewId]) {
     await showTransition(transitionViews[viewId], 1200);
   }
@@ -183,12 +179,8 @@ async function showView(viewId) {
 
 // ---------- FORMATAGE DES NOMBRES ----------
 function formatNumber(num) {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M';
-  }
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K';
-  }
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
   return num.toString();
 }
 
@@ -209,7 +201,6 @@ function generateFeed() {
         <div class="video-progress">
           <div class="video-progress-bar" data-video-id="${video.id}"></div>
         </div>
-
         <div class="video-info">
           <p class="video-user">${video.user}</p>
           <p class="video-title">${video.title}</p>
@@ -270,91 +261,61 @@ function observeFeedItems() {
         }
       }
     });
-  }, {
-    threshold: 0.6
-  });
+  }, { threshold: 0.6 });
 
   feedItems.forEach(item => observer.observe(item));
 }
 
-// ---------- METTRE À JOUR L'ÉTAT DES LIKES ----------
+// ---------- ÉTATS LIKES / FAVORIS ----------
 function updateLikeState(videoId) {
   const likeBtn = document.querySelector('.like-btn');
   if (!likeBtn) return;
-
   const saved = localStorage.getItem(`nova_like_${videoId}`);
-  if (saved === 'true') {
-    likeBtn.classList.add('active');
-  } else {
-    likeBtn.classList.remove('active');
-  }
+  if (saved === 'true') likeBtn.classList.add('active');
+  else likeBtn.classList.remove('active');
 }
 
-// ---------- METTRE À JOUR L'ÉTAT DES FAVORIS ----------
 function updateBookmarkState(videoId) {
   const bookmarkBtn = document.querySelector('.bookmark-btn');
   if (!bookmarkBtn) return;
-
   const saved = localStorage.getItem(`nova_bookmark_${videoId}`);
-  if (saved === 'true') {
-    bookmarkBtn.classList.add('active');
-  } else {
-    bookmarkBtn.classList.remove('active');
-  }
+  if (saved === 'true') bookmarkBtn.classList.add('active');
+  else bookmarkBtn.classList.remove('active');
 }
 
 // ---------- INTERACTIONS DU FEED ----------
 function attachFeedInteractions() {
-  // Like
   document.querySelectorAll('.like-btn').forEach(btn => {
     btn.addEventListener('click', function () {
       const videoId = videosData[currentVideoIndex].id;
       const key = `nova_like_${videoId}`;
-
       const isActive = this.classList.toggle('active');
       localStorage.setItem(key, isActive ? 'true' : 'false');
-
-      console.log(`Like vidéo ${videoId} :`, isActive);
     });
   });
 
-  // Favoris
   document.querySelectorAll('.bookmark-btn').forEach(btn => {
     btn.addEventListener('click', function () {
       const videoId = videosData[currentVideoIndex].id;
       const key = `nova_bookmark_${videoId}`;
-
       const isActive = this.classList.toggle('active');
       localStorage.setItem(key, isActive ? 'true' : 'false');
-
-      console.log(`Favori vidéo ${videoId} :`, isActive);
     });
   });
 
-  // Suivre
   const followBtn = document.getElementById('follow-btn');
   if (followBtn) {
     followBtn.addEventListener('click', function () {
       this.classList.toggle('following');
 
       if (this.classList.contains('following')) {
-        this.innerHTML = `
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-        `;
+        this.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
       } else {
-        this.innerHTML = `
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-        `;
+        this.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
       }
     });
   }
 
-  // ACHETER
   const buyBtn = document.querySelector('.buy-btn');
   if (buyBtn) {
     buyBtn.addEventListener('click', function () {
@@ -363,7 +324,6 @@ function attachFeedInteractions() {
     });
   }
 
-  // RÉSERVER
   const reserveBtn = document.querySelector('.reserve-btn');
   if (reserveBtn) {
     reserveBtn.addEventListener('click', function () {
@@ -378,9 +338,7 @@ function startProgressBar() {
   const progressBar = document.querySelector('.video-progress-bar');
   if (!progressBar) return;
 
-  if (progressInterval) {
-    clearInterval(progressInterval);
-  }
+  if (progressInterval) clearInterval(progressInterval);
 
   let progress = 0;
   progressBar.style.width = '0%';
@@ -396,7 +354,6 @@ function startProgressBar() {
   }, 150);
 }
 
-// ---------- PASSER À LA VIDÉO SUIVANTE ----------
 function goToNextVideo() {
   const feedContainer = document.getElementById('feed-container');
   if (!feedContainer) return;
@@ -404,13 +361,11 @@ function goToNextVideo() {
   const nextIndex = currentVideoIndex + 1;
   if (nextIndex < videosData.length) {
     const nextVideo = feedContainer.querySelector(`[data-video-id="${videosData[nextIndex].id}"]`);
-    if (nextVideo) {
-      nextVideo.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (nextVideo) nextVideo.scrollIntoView({ behavior: 'smooth' });
   }
 }
 
-// ---------- GESTION DE L'AVATAR (Initiales) ----------
+// ---------- GESTION DE L'AVATAR ----------
 function setAvatarInitials(fullName, elementId) {
   const element = document.getElementById(elementId);
   if (!element) return;
@@ -431,7 +386,7 @@ function setAvatarInitials(fullName, elementId) {
 function saveUser(user) {
   currentUser = user;
   localStorage.setItem('nova_user', JSON.stringify(user));
-  console.log("Utilisateur sauvegardé :", user);
+  console.log("💾 Utilisateur sauvegardé :", user);
 }
 
 function loadUser() {
@@ -439,7 +394,7 @@ function loadUser() {
   if (stored) {
     try {
       currentUser = JSON.parse(stored);
-      console.log("Utilisateur chargé :", currentUser);
+      console.log("📂 Utilisateur chargé :", currentUser);
       updateUIWithUser();
       return currentUser;
     } catch (e) {
@@ -448,13 +403,6 @@ function loadUser() {
     }
   }
   return null;
-}
-
-function logout() {
-  currentUser = null;
-  localStorage.removeItem('nova_user');
-  console.log("Utilisateur déconnecté");
-  showView('view-login');
 }
 
 function updateUIWithUser() {
@@ -499,68 +447,239 @@ function initFeed() {
   observeFeedItems();
 }
 
-// ---------- AUTHENTIFICATION ----------
-const loginForm = document.getElementById('login-form');
-if (loginForm) {
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+// ============================================
+// AUTHENTIFICATION SUPABASE
+// ============================================
 
-    const email = document.getElementById('login-email').value;
-
-    const user = {
-      name: email.split('@')[0],
-      email: email,
-      loggedInAt: new Date().toISOString()
-    };
-
-    saveUser(user);
-    await showView('view-feed');
-  });
-}
-
+// ---------- INSCRIPTION ----------
 const registerForm = document.getElementById('register-form');
 if (registerForm) {
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const name = document.getElementById('register-name').value;
-    const email = document.getElementById('register-email').value;
-    const phone = document.getElementById('register-phone').value;
-    const address = document.getElementById('register-address').value;
-    const city = document.getElementById('register-city').value;
-    const country = document.getElementById('register-country').value;
+    console.log("📝 Formulaire d'inscription soumis");
 
-    const user = {
-      name: name,
-      email: email,
-      phone: phone,
-      address: address,
-      city: city,
-      country: country,
-      registeredAt: new Date().toISOString()
-    };
+    const name = document.getElementById('register-name').value.trim();
+    const email = document.getElementById('register-email').value.trim();
+    const password = document.getElementById('register-password').value;
+    const passwordConfirm = document.getElementById('register-password-confirm').value;
+    const phone = document.getElementById('register-phone').value.trim();
+    const birthdate = document.getElementById('register-birthdate').value;
+    const address = document.getElementById('register-address').value.trim();
+    const city = document.getElementById('register-city').value.trim();
+    const country = document.getElementById('register-country').value.trim();
 
-    saveUser(user);
-    await showView('view-feed');
+    if (password !== passwordConfirm) {
+      alert("❌ Les mots de passe ne correspondent pas.");
+      return;
+    }
+
+    if (password.length < 6) {
+      alert("❌ Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
+
+    const submitBtn = registerForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "Création en cours...";
+    submitBtn.disabled = true;
+
+    try {
+      console.log("📝 Tentative d'inscription pour :", email);
+
+      const { data, error } = await window.NovaSupabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            full_name: name,
+            phone: phone,
+            birthdate: birthdate,
+            address: address,
+            city: city,
+            country: country
+          }
+        }
+      });
+
+      if (error) {
+        console.error("❌ Erreur inscription :", error);
+        alert(`❌ Erreur : ${error.message}`);
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        return;
+      }
+
+      console.log("✅ Inscription réussie :", data);
+
+      const user = {
+        id: data.user?.id,
+        name: name,
+        email: email,
+        phone: phone,
+        address: address,
+        city: city,
+        country: country,
+        registeredAt: new Date().toISOString()
+      };
+
+      saveUser(user);
+      updateUIWithUser();
+
+      alert(`✅ Bienvenue sur Nova, ${name} !`);
+
+      await showView('view-feed');
+
+    } catch (error) {
+      console.error("❌ Erreur inattendue :", error);
+      alert("❌ Une erreur est survenue : " + error.message);
+    } finally {
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+    }
   });
 }
 
-// ---------- DÉMARRAGE ----------
-document.addEventListener('DOMContentLoaded', () => {
-  console.log("Nova est prêt !");
+// ---------- CONNEXION ----------
+const loginForm = document.getElementById('login-form');
+if (loginForm) {
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  // Lancer le splash screen
+    console.log("🔐 Formulaire de connexion soumis");
+
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    if (!email || !password) {
+      alert("❌ Email et mot de passe obligatoires.");
+      return;
+    }
+
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "Connexion...";
+    submitBtn.disabled = true;
+
+    try {
+      console.log("🔐 Tentative de connexion pour :", email);
+
+      const { data, error } = await window.NovaSupabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) {
+        console.error("❌ Erreur connexion :", error);
+        alert(`❌ Erreur : ${error.message}`);
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        return;
+      }
+
+      console.log("✅ Connexion réussie :", data);
+
+      const user = {
+        id: data.user.id,
+        name: data.user.user_metadata?.full_name || email.split('@')[0],
+        email: data.user.email,
+        phone: data.user.user_metadata?.phone || '',
+        address: data.user.user_metadata?.address || '',
+        city: data.user.user_metadata?.city || '',
+        country: data.user.user_metadata?.country || '',
+        loggedInAt: new Date().toISOString()
+      };
+
+      saveUser(user);
+      updateUIWithUser();
+
+      await showView('view-feed');
+
+    } catch (error) {
+      console.error("❌ Erreur inattendue :", error);
+      alert("❌ Une erreur est survenue : " + error.message);
+    } finally {
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+    }
+  });
+}
+
+// ---------- DÉCONNEXION ----------
+async function logout() {
+  try {
+    console.log("🚪 Déconnexion...");
+    await window.NovaSupabase.auth.signOut();
+    currentUser = null;
+    localStorage.removeItem('nova_user');
+    console.log("✅ Déconnecté");
+    showView('view-login');
+  } catch (error) {
+    console.error("❌ Erreur déconnexion :", error);
+  }
+}
+
+// ---------- VÉRIFICATION DE SESSION ----------
+async function checkSession() {
+  try {
+    const { data, error } = await window.NovaSupabase.auth.getSession();
+
+    if (error) {
+      console.error("❌ Erreur session :", error);
+      return null;
+    }
+
+    if (data.session) {
+      console.log("✅ Session active :", data.session.user.email);
+
+      const user = {
+        id: data.session.user.id,
+        name: data.session.user.user_metadata?.full_name || data.session.user.email.split('@')[0],
+        email: data.session.user.email,
+        phone: data.session.user.user_metadata?.phone || '',
+        address: data.session.user.user_metadata?.address || '',
+        city: data.session.user.user_metadata?.city || '',
+        country: data.session.user.user_metadata?.country || ''
+      };
+
+      saveUser(user);
+      updateUIWithUser();
+      return user;
+    }
+
+    console.log("ℹ️ Aucune session active");
+    return null;
+  } catch (error) {
+    console.error("❌ Erreur vérification session :", error);
+    return null;
+  }
+}
+
+// ---------- ÉCOUTE DES CHANGEMENTS D'AUTH ----------
+window.NovaSupabase.auth.onAuthStateChange((event, session) => {
+  console.log("🔄 Auth state changed :", event);
+
+  if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    localStorage.removeItem('nova_user');
+  }
+});
+
+// ---------- DÉMARRAGE ----------
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log("🚀 Nova est prêt !");
+
   showSplashScreen();
 
-  // Charger l'utilisateur et initialiser le feed APRÈS le splash
-  setTimeout(() => {
-    const user = loadUser();
+  setTimeout(async () => {
+    const user = await checkSession();
+
     initFeed();
 
     if (user) {
-      showView('view-feed');
+      await showView('view-feed');
     } else {
-      showView('view-login');
+      await showView('view-login');
     }
   }, 3800);
 });
