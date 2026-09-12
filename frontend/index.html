@@ -12,6 +12,31 @@
 <body>
 
   <!-- ============================================
+       ÉCRAN DE DÉMARRAGE (SPLASH SCREEN)
+       ============================================ -->
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-content">
+      <h1 class="splash-logo">NOVA</h1>
+      <p class="splash-tagline">L'excellence à portée de main</p>
+      <div class="splash-loader">
+        <div class="splash-loader-bar"></div>
+      </div>
+      <p class="splash-status" id="splash-status">Initialisation...</p>
+    </div>
+  </div>
+
+  <!-- ============================================
+       ÉCRAN DE TRANSITION
+       ============================================ -->
+  <div id="transition-screen" class="transition-screen">
+    <div class="transition-content">
+      <div class="transition-spinner"></div>
+      <h2 class="transition-logo">NOVA</h2>
+      <p class="transition-text" id="transition-text">Chargement...</p>
+    </div>
+  </div>
+
+  <!-- ============================================
        VUE 1 : CONNEXION
        ============================================ -->
   <section id="view-login" class="view">
@@ -78,8 +103,7 @@
        VUE 3 : FEED VIDÉO
        ============================================ -->
   <section id="view-feed" class="view">
-    
-    <!-- Header (superposé sur le feed) -->
+
     <header class="feed-header">
       <h1 class="logo-small">NOVA</h1>
       <div class="header-actions">
@@ -98,67 +122,10 @@
       </div>
     </header>
 
-    <!-- Conteneur du feed (scrollable) -->
     <div class="feed-container" id="feed-container">
-
-      <!-- Vidéo 1 -->
-      <div class="feed-item" data-video-id="1">
-        <div class="video-bg" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-          <div class="video-info">
-            <p class="video-user">@boutique_mode</p>
-            <p class="video-title">Robe élégante</p>
-            <p class="video-price">1 500 Nova</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Vidéo 2 -->
-      <div class="feed-item" data-video-id="2">
-        <div class="video-bg" style="background: linear-gradient(135deg, #2e1a1a 0%, #3e1616 100%);">
-          <div class="video-info">
-            <p class="video-user">@electronic_store</p>
-            <p class="video-title">iPhone 15 Pro</p>
-            <p class="video-price">45 000 Nova</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Vidéo 3 -->
-      <div class="feed-item" data-video-id="3">
-        <div class="video-bg" style="background: linear-gradient(135deg, #1a2e1a 0%, #163e16 100%);">
-          <div class="video-info">
-            <p class="video-user">@artisan_burkina</p>
-            <p class="video-title">Masque traditionnel</p>
-            <p class="video-price">8 500 Nova</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Vidéo 4 -->
-      <div class="feed-item" data-video-id="4">
-        <div class="video-bg" style="background: linear-gradient(135deg, #2e2a1a 0%, #3e3816 100%);">
-          <div class="video-info">
-            <p class="video-user">@bijoux_luxe</p>
-            <p class="video-title">Collier en or</p>
-            <p class="video-price">25 000 Nova</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Vidéo 5 -->
-      <div class="feed-item" data-video-id="5">
-        <div class="video-bg" style="background: linear-gradient(135deg, #2e1a2a 0%, #3e1638 100%);">
-          <div class="video-info">
-            <p class="video-user">@parfum_premium</p>
-            <p class="video-title">Parfum de luxe</p>
-            <p class="video-price">12 000 Nova</p>
-          </div>
-        </div>
-      </div>
-
+      <!-- Les vidéos seront générées par JavaScript -->
     </div>
 
-    <!-- Colonne d'actions (UNE SEULE FOIS, en dehors du feed-container) -->
     <div class="feed-actions">
 
       <div class="action-item">
@@ -240,7 +207,6 @@
 
     </div>
 
-    <!-- Barre de navigation (superposée en bas) -->
     <nav class="bottom-nav">
       <button class="nav-btn active" onclick="showView('view-feed')" aria-label="Accueil">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
