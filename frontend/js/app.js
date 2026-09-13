@@ -1,5 +1,5 @@
 // ============================================
-// NOVA - Logique principale (Jour 7 - Auth Supabase)
+// NOVA - Logique principale (Jour 9 + Navigation instantanée)
 // ============================================
 
 // ---------- VARIABLES GLOBALES ----------
@@ -80,6 +80,7 @@ const videosData = [
 // ÉCRANS DE CHARGEMENT
 // ============================================
 
+// ---------- SPLASH SCREEN (2,5s) ----------
 function showSplashScreen() {
   const splash = document.getElementById('splash-screen');
   const status = document.getElementById('splash-status');
@@ -88,11 +89,11 @@ function showSplashScreen() {
   if (!splash) return;
 
   const steps = [
-    { text: 'Initialisation...', duration: 800, progress: 20 },
-    { text: 'Chargement des ressources...', duration: 800, progress: 45 },
-    { text: 'Préparation du feed...', duration: 800, progress: 70 },
-    { text: 'Connexion au serveur...', duration: 600, progress: 90 },
-    { text: 'Bienvenue sur Nova ✨', duration: 400, progress: 100 }
+    { text: 'Initialisation...', duration: 500, progress: 20 },
+    { text: 'Chargement des ressources...', duration: 500, progress: 45 },
+    { text: 'Préparation du feed...', duration: 500, progress: 70 },
+    { text: 'Connexion au serveur...', duration: 500, progress: 90 },
+    { text: 'Bienvenue sur Nova ✨', duration: 500, progress: 100 }
   ];
 
   let currentStep = 0;
@@ -119,6 +120,7 @@ function showSplashScreen() {
   runStep();
 }
 
+// ---------- ÉCRAN DE TRANSITION (pour opérations longues uniquement) ----------
 function showTransition(text = 'Chargement...', duration = 1500) {
   return new Promise((resolve) => {
     const transition = document.getElementById('transition-screen');
@@ -139,7 +141,9 @@ function showTransition(text = 'Chargement...', duration = 1500) {
   });
 }
 
-// ---------- NAVIGATION ENTRE LES VUES ----------
+// ============================================
+// NAVIGATION ENTRE LES VUES (INSTANTANÉE)
+// ============================================
 async function showView(viewId) {
   const allViews = document.querySelectorAll('.view');
   const targetView = document.getElementById(viewId);
@@ -147,25 +151,16 @@ async function showView(viewId) {
   if (!targetView) return;
   if (targetView.classList.contains('active')) return;
 
-  const transitionViews = {
-    'view-feed': 'Préparation du feed...',
-    'view-profile': 'Chargement du profil...',
-    'view-wallet': 'Connexion au NovaWallet...'
-  };
-
-  if (transitionViews[viewId]) {
-    await showTransition(transitionViews[viewId], 1200);
-  }
-
+  // Cacher l'ancienne vue (transition CSS)
   const currentView = document.querySelector('.view.active');
-
   if (currentView) {
     currentView.classList.add('leaving');
     setTimeout(() => {
       currentView.classList.remove('active', 'leaving');
-    }, 400);
+    }, 300);
   }
 
+  // Afficher la nouvelle vue (transition CSS)
   setTimeout(() => {
     targetView.classList.add('active');
     window.scrollTo(0, 0);
@@ -175,6 +170,12 @@ async function showView(viewId) {
       feedContainer.scrollTop = 0;
     }
   }, 50);
+
+  // Charger les publications quand on va sur le profil
+  if (viewId === 'view-profile') {
+    setTimeout(() => loadMyPublications(), 300);
+  }
+
 }
 
 // ---------- FORMATAGE DES NOMBRES ----------
@@ -418,6 +419,12 @@ function updateUIWithUser() {
     setAvatarInitials(currentUser.name, 'feed-avatar');
     setAvatarInitials(currentUser.name, 'profile-avatar');
   }
+
+  // Mettre à jour le wallet
+  const walletBalance = document.getElementById('wallet-balance');
+  if (walletBalance) {
+    walletBalance.textContent = currentUser.balance || 0;
+  }
 }
 
 // ---------- GÉOLOCALISATION ----------
@@ -526,8 +533,7 @@ if (registerForm) {
       saveUser(user);
       updateUIWithUser();
 
-      alert(`✅ Bienvenue sur Nova, ${name} !`);
-
+      // Navigation instantanée vers le feed
       await showView('view-feed');
 
     } catch (error) {
@@ -593,6 +599,7 @@ if (loginForm) {
       saveUser(user);
       updateUIWithUser();
 
+      // Navigation instantanée vers le feed
       await showView('view-feed');
 
     } catch (error) {
@@ -612,8 +619,9 @@ async function logout() {
     await window.NovaSupabase.auth.signOut();
     currentUser = null;
     localStorage.removeItem('nova_user');
-    console.log("✅ Déconnecté");
-    showView('view-login');
+
+    // Navigation instantanée vers la connexion
+    await showView('view-login');
   } catch (error) {
     console.error("❌ Erreur déconnexion :", error);
   }
@@ -632,14 +640,43 @@ async function checkSession() {
     if (data.session) {
       console.log("✅ Session active :", data.session.user.email);
 
+      const { data: userData, error: userError } = await window.NovaSupabase
+        .from('users')
+        .select('*')
+        .eq('id', data.session.user.id)
+        .single();
+
+      if (userError) {
+        console.error("❌ Erreur récupération user :", userError);
+        const user = {
+          id: data.session.user.id,
+          name: data.session.user.user_metadata?.full_name || data.session.user.email.split('@')[0],
+          email: data.session.user.email
+        };
+        saveUser(user);
+updateUIWithUser();
+loadTransactions();
+loadMyPublications(); // ← AJOUTE CETTE LIGNE
+return user;
+      }
+
+      const { data: walletData } = await window.NovaSupabase
+        .from('wallets')
+        .select('balance_nova')
+        .eq('user_id', data.session.user.id)
+        .single();
+
       const user = {
-        id: data.session.user.id,
-        name: data.session.user.user_metadata?.full_name || data.session.user.email.split('@')[0],
-        email: data.session.user.email,
-        phone: data.session.user.user_metadata?.phone || '',
-        address: data.session.user.user_metadata?.address || '',
-        city: data.session.user.user_metadata?.city || '',
-        country: data.session.user.user_metadata?.country || ''
+        id: userData.id,
+        name: userData.full_name,
+        email: userData.email,
+        phone: userData.phone,
+        address: userData.location_address,
+        city: userData.city,
+        country: userData.country,
+        isSeller: userData.is_seller,
+        isDeliverer: userData.is_deliverer,
+        balance: walletData?.balance_nova || 0
       };
 
       saveUser(user);
@@ -681,5 +718,295 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       await showView('view-login');
     }
-  }, 3800);
+  
+  
+  }, 2500);
+
+  
+});
+
+// ============================================
+// JOUR 10 : MODALE DE DÉPÔT
+// ============================================
+let selectedPaymentMethod = 'orange_money';
+
+function openDepositModal() {
+  const modal = document.getElementById('deposit-modal');
+  if (modal) {
+    modal.classList.add('visible');
+    document.getElementById('deposit-amount-fcfa').value = '';
+    document.getElementById('deposit-conversion').textContent = '0 Nova';
+  }
+}
+
+function closeDepositModal() {
+  const modal = document.getElementById('deposit-modal');
+  if (modal) modal.classList.remove('visible');
+}
+
+async function confirmDeposit() {
+  if (!currentUser) { alert("❌ Connecte-toi."); return; }
+  const fcfa = parseFloat(document.getElementById('deposit-amount-fcfa').value);
+  if (!fcfa || fcfa < 100) { alert("❌ Montant minimum : 100 FCFA."); return; }
+
+  const nova = fcfa / 10;
+  const confirmBtn = document.getElementById('deposit-confirm-btn');
+  confirmBtn.textContent = 'Traitement...';
+  confirmBtn.disabled = true;
+
+  try {
+    const response = await fetch('http://localhost:3000/api/wallet/deposit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id, amountNova: nova, amountFCFA: fcfa, paymentMethod: selectedPaymentMethod })
+    });
+
+    const result = await response.json();
+    if (!result.success) { alert(`❌ ${result.error}`); return; }
+
+    currentUser.balance = result.wallet.balance_nova;
+    saveUser(currentUser);
+    updateUIWithUser();
+
+    alert(`✅ Dépôt de ${fcfa} FCFA effectué ! Tu as ${result.wallet.balance_nova} Nova.`);
+    closeDepositModal();
+    loadTransactions();
+  } catch (error) {
+    alert("❌ Erreur : " + error.message);
+  } finally {
+    confirmBtn.textContent = 'Confirmer le dépôt';
+    confirmBtn.disabled = false;
+  }
+}
+
+async function loadTransactions() {
+  if (!currentUser) return;
+  try {
+    const response = await fetch(`http://localhost:3000/api/transactions/${currentUser.id}`);
+    const result = await response.json();
+    const container = document.getElementById('wallet-transactions');
+    if (!container) return;
+
+    if (!result.transactions || result.transactions.length === 0) {
+      container.innerHTML = '<p class="empty-state">Aucune transaction.</p>';
+      return;
+    }
+
+    container.innerHTML = result.transactions.map(t => `
+      <div class="transaction-item">
+        <div class="transaction-icon">${t.type === 'deposit' ? '📥' : t.type === 'withdrawal' ? '📤' : '💳'}</div>
+        <div class="transaction-info">
+          <p class="transaction-type">${t.type}</p>
+          <p class="transaction-date">${new Date(t.created_at).toLocaleDateString('fr-FR')}</p>
+        </div>
+        <div class="transaction-amount ${t.amount_nova > 0 ? 'positive' : 'negative'}">
+          ${t.amount_nova > 0 ? '+' : ''}${t.amount_nova} Nova
+        </div>
+      </div>
+    `).join('');
+  } catch (error) {
+    console.error("❌ Transactions :", error);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const amountInput = document.getElementById('deposit-amount-fcfa');
+  if (amountInput) {
+    amountInput.addEventListener('input', function () {
+      const fcfa = parseFloat(this.value) || 0;
+      document.getElementById('deposit-conversion').textContent = (fcfa / 10).toFixed(2) + ' Nova';
+    });
+  }
+
+  document.querySelectorAll('.payment-method').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.payment-method').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      selectedPaymentMethod = this.dataset.method;
+    });
+  });
+});
+
+// ============================================
+// JOUR 11 : PUBLICATION PAYANTE
+// ============================================
+const publishForm = document.getElementById('publish-form');
+if (publishForm) {
+  publishForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log("📝 Formulaire de publication soumis");
+
+    if (!currentUser) {
+      alert("❌ Tu dois être connecté.");
+      return;
+    }
+
+    const title = document.getElementById('publish-title').value.trim();
+    const description = document.getElementById('publish-description').value.trim();
+    const priceNova = parseFloat(document.getElementById('publish-price').value);
+    const stock = parseInt(document.getElementById('publish-stock').value) || 1;
+    const mediaFile = document.getElementById('publish-media').files[0];
+
+    if (!title || !priceNova || !mediaFile) {
+      alert("❌ Titre, prix et média obligatoires.");
+      return;
+    }
+
+    const mediaType = mediaFile.type.startsWith('video/') ? 'video' : 'photo';
+    const feeNova = mediaType === 'photo' ? 0.5 : 1;
+
+    console.log(`📤 Publication : ${title}, type: ${mediaType}, frais: ${feeNova} Nova`);
+
+    const submitBtn = publishForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "Publication en cours...";
+    submitBtn.disabled = true;
+
+    try {
+      // 1. Upload du média
+      const fileName = `${Date.now()}_${mediaFile.name}`;
+      console.log("📤 Upload du fichier :", fileName);
+
+      const { data: uploadData, error: uploadError } = await window.NovaSupabase
+        .storage
+        .from('media')
+        .upload(fileName, mediaFile);
+
+      if (uploadError) {
+        console.error("❌ Erreur upload :", uploadError);
+        alert("❌ Erreur d'upload : " + uploadError.message);
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        return;
+      }
+
+      console.log("✅ Upload réussi :", uploadData);
+
+      // Récupérer l'URL publique
+      const { data: urlData } = window.NovaSupabase
+        .storage
+        .from('media')
+        .getPublicUrl(fileName);
+      const mediaUrl = urlData.publicUrl;
+
+      console.log("🔗 URL du média :", mediaUrl);
+
+      // 2. Appeler l'API de publication
+      const response = await fetch('http://localhost:3000/api/products/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          title: title,
+          description: description,
+          mediaUrl: mediaUrl,
+          mediaType: mediaType,
+          priceNova: priceNova,
+          stock: stock,
+          duration: mediaType === 'video' ? 30 : null
+        })
+      });
+
+      const result = await response.json();
+      console.log("📥 Réponse API :", result);
+
+      if (!result.success) {
+        alert(`❌ ${result.error}`);
+        return;
+      }
+
+      currentUser.balance = result.wallet.balance_nova;
+      saveUser(currentUser);
+      updateUIWithUser();
+
+      alert(`✅ Produit publié ! Frais : ${result.fee} Nova. Nouveau solde : ${result.wallet.balance_nova} Nova.`);
+      publishForm.reset();
+      await showView('view-feed');
+
+    } catch (error) {
+      console.error("❌ Erreur publication :", error);
+      alert("❌ Une erreur est survenue : " + error.message);
+    } finally {
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+    }
+  });
+}
+
+// Afficher les frais en temps réel
+const publishMediaInput = document.getElementById('publish-media');
+if (publishMediaInput) {
+  publishMediaInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const isVideo = file.type.startsWith('video/');
+    const feeElement = document.getElementById('publish-fee-amount');
+    if (feeElement) feeElement.textContent = isVideo ? '1' : '0.5';
+  });
+}
+
+console.log("✅ Module de publication chargé");
+
+// ============================================
+// MES PUBLICATIONS (Grille)
+// ============================================
+async function loadMyPublications() {
+  if (!currentUser) return;
+
+  const container = document.getElementById('my-publications-list');
+  if (!container) return;
+
+  try {
+    const response = await fetch(`http://localhost:3000/api/products/seller/${currentUser.id}`);
+    const result = await response.json();
+
+    if (!result.success || !result.products || result.products.length === 0) {
+      container.innerHTML = '<p class="empty-state">Aucune publication pour l\'instant.</p>';
+      return;
+    }
+
+    container.innerHTML = result.products.map((p) => {
+      // Stats simulées
+      const views = Math.floor(((p.id.charCodeAt(0) || 50) * 7) % 2000) + 50;
+      const thumbnail = p.media_type === 'video' ? '🎬' : '📷';
+
+      return `
+        <div class="publication-grid-item" onclick="alert('${p.title}')">
+          <div class="publication-thumb">${thumbnail}</div>
+          <div class="publication-overlay">
+            <span class="publication-views">👁️ ${views}</span>
+            <span class="publication-grid-price">${p.price_nova} N</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    console.log(`📦 ${result.products.length} publications chargées`);
+
+  } catch (error) {
+    console.error("❌ Erreur chargement publications :", error);
+    container.innerHTML = '<p class="empty-state">Erreur de chargement.</p>';
+  }
+}
+
+// ============================================
+// GESTION DES ONGLETS
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+  const tabs = document.querySelectorAll('.profile-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', function () {
+      // Désactiver tous les onglets
+      tabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+
+      // Cacher tous les contenus
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      // Afficher le bon contenu
+      const tabName = this.dataset.tab;
+      const content = document.getElementById(`tab-${tabName}`);
+      if (content) content.classList.add('active');
+    });
+  });
 });
